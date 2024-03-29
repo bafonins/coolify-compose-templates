@@ -1,0 +1,27 @@
+services:
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    environment:
+      - DATABASE_URL=postgres://${USER_POSTGRES}:${PASSWORD_POSTGRES}@postgresql:5432/${POSTGRES_DB}
+      - DATABASE_TYPE=postgres
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3123/api/heartbeat"]
+      interval: 5s
+      timeout: 20s
+      retries: 10
+  postgresql:
+    image: postgres:16-alpine
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${USER_POSTGRES}
+      - POSTGRES_PASSWORD=${PASSWORD_POSTGRES}
+      - POSTGRES_DB=${POSTGRES_DB:-umami}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 20s
+      retries: 10
